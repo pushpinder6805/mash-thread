@@ -5,7 +5,16 @@ export default apiInitializer("0.8", (api) => {
   api.decorateCookedElement((elem, helper) => {
     const post = helper.getModel();
 
-    if (!post || !post.reply_count) return;
+    if (!post) return;
+
+    if (post.post_number === 1) {
+      if (!elem.querySelector(".thr-topic-stats")) {
+        injectTopicStats(post, elem);
+      }
+      return;
+    }
+
+    if (!post.reply_count) return;
     if (elem.querySelector(".thr-thread-box")) return;
 
     hideNativeReplies(elem);
@@ -63,23 +72,55 @@ export default apiInitializer("0.8", (api) => {
   });
 });
 
+function injectTopicStats(post, elem) {
+  const topic = post.topic;
+  if (!topic) return;
+
+  const views = topic.views || 0;
+  const replyCount = topic.reply_count || 0;
+  const likeCount = topic.like_count || 0;
+
+  const statsEl = document.createElement("div");
+  statsEl.className = "thr-topic-stats";
+  statsEl.innerHTML = `
+    <span class="thr-stat">
+      <svg class="thr-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+      <span class="thr-stat-value">${formatCount(views)}</span>
+    </span>
+    <span class="thr-stat-divider"></span>
+    <span class="thr-stat">
+      <svg class="thr-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="thr-stat-value">${formatCount(replyCount)}</span>
+    </span>
+    <span class="thr-stat-divider"></span>
+    <span class="thr-stat">
+      <svg class="thr-stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+      <span class="thr-stat-value">${formatCount(likeCount)}</span>
+    </span>
+  `;
+
+  elem.appendChild(statsEl);
+}
+
+function formatCount(n) {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  return n;
+}
+
 async function loadReplies(post, repliesContainer) {
   repliesContainer.innerHTML = `<div class="thr-loading">Loading replies…</div>`;
 
   try {
     const topicId = post.topic_id;
-    let replies = [];
-
-    if (post.post_number === 1) {
-      const topicData = await ajax(`/t/${topicId}.json?print=true`);
-      const allPosts = (topicData.post_stream && topicData.post_stream.posts) || [];
-      replies = allPosts.filter(
-        (p) => p.post_number !== 1 && (!p.reply_to_post_number || p.reply_to_post_number === 1)
-      );
-    } else {
-      const data = await ajax(`/posts/${post.id}/replies.json`);
-      replies = data || [];
-    }
+    const data = await ajax(`/posts/${post.id}/replies.json`);
+    const replies = data || [];
 
     repliesContainer.innerHTML = "";
 

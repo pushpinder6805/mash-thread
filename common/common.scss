@@ -195,3 +195,41 @@
 .thr-error {
   color: #ef4444;
 }
+
+.thr-topic-stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.thr-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.thr-stat-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.thr-stat-value {
+  color: #374151;
+  font-weight: 600;
+}
+
+.thr-stat-divider {
+  display: inline-block;
+  width: 1px;
+  height: 14px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
