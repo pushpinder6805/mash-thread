@@ -107,6 +107,44 @@ function injectTopicStats(post, elem) {
   `;
 
   elem.appendChild(statsEl);
+
+  injectTopicMetaBar(post, elem);
+}
+
+function injectTopicMetaBar(post, cookedElem) {
+  const topic = post.topic;
+  if (!topic) return;
+
+  const article = cookedElem.closest("article.boxed") || cookedElem.closest("article");
+  if (!article) return;
+
+  if (document.querySelector(".thr-meta-bar")) return;
+
+  const contributors = topic.participant_count || topic.posters?.length || 0;
+  const links = topic.links_count || 0;
+  const wordCount = topic.word_count || 0;
+  const readMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+  const bar = document.createElement("div");
+  bar.className = "thr-meta-bar";
+  bar.innerHTML = `
+    <div class="thr-meta-left">
+      <span class="thr-meta-item">
+        <strong>${formatCount(contributors)}</strong> Contributors
+      </span>
+      <span class="thr-meta-item">
+        <strong>${formatCount(links)}</strong> Links
+      </span>
+      <span class="thr-meta-item">
+        <strong>${readMinutes} min</strong> Read time
+      </span>
+    </div>
+  `;
+
+  const parent = article.parentNode;
+  if (parent) {
+    parent.insertBefore(bar, article.nextSibling);
+  }
 }
 
 function formatCount(n) {

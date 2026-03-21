@@ -233,3 +233,32 @@
   background: #d1d5db;
   margin: 0 4px;
 }
+
+.thr-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  margin-bottom: 8px;
+}
+
+.thr-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.thr-meta-item {
+  font-size: 13.5px;
+  color: #6b7280;
+
+  strong {
+    color: #1e3a5f;
+    font-weight: 700;
+    margin-right: 4px;
+  }
+}
