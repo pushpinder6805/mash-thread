@@ -35,8 +35,11 @@ export default apiInitializer("0.8", (api) => {
     let loaded = false;
     let expanded = true;
 
-    loadReplies(post, repliesContainer).then(() => {
+    loadReplies(post, repliesContainer).then((actualCount) => {
       loaded = true;
+      if (typeof actualCount === "number" && actualCount !== post.reply_count) {
+        toggleBtn.querySelector(".thr-reply-count").textContent = `${actualCount} ${actualCount === 1 ? "Reply" : "Replies"}`;
+      }
     });
 
     toggleBtn.addEventListener("click", async () => {
@@ -72,7 +75,7 @@ async function loadReplies(post, repliesContainer) {
 
     if (replies.length === 0) {
       repliesContainer.innerHTML = `<div class="thr-empty">No replies yet.</div>`;
-      return;
+      return 0;
     }
 
     const line = document.createElement("div");
@@ -109,6 +112,8 @@ async function loadReplies(post, repliesContainer) {
 
       repliesContainer.appendChild(replyEl);
     });
+
+    return replies.length;
 
   } catch (e) {
     repliesContainer.innerHTML = `<div class="thr-error">Could not load replies.</div>`;
