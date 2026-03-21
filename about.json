@@ -1,0 +1,9 @@
+{
+  "name": "threaded-replies-ui",
+  "about_url": "https://example.com/threaded-replies-ui",
+  "license_url": "https://opensource.org/licenses/MIT",
+  "component": true,
+  "authors": "raza",
+  "theme_version": "1.0.0",
+  "minimum_discourse_version": "3.2.0"
+}
