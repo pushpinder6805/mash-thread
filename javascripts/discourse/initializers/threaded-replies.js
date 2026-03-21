@@ -116,38 +116,25 @@ async function loadReplies(post, repliesContainer) {
 }
 
 function hideNativeReplies(cookedElem) {
-  const postArticle = cookedElem.closest("article.boxed, .topic-post");
-  const postBody = cookedElem.closest(".post__body, .topic-body");
-  const searchRoot = postArticle || postBody || cookedElem.parentElement;
-
-  if (!searchRoot) return;
+  const article = cookedElem.closest("article.boxed") || cookedElem.closest("article");
+  if (!article) return;
 
   const tryHide = () => {
-    const showRepliesBtn = searchRoot.querySelector(".post-action-menu__show-replies");
-    if (showRepliesBtn) {
-      showRepliesBtn.style.display = "none";
-    }
+    const showRepliesBtn = article.querySelector(".post-action-menu__show-replies");
+    if (showRepliesBtn) showRepliesBtn.style.setProperty("display", "none", "important");
 
-    const embeddedBottom = searchRoot.querySelector("[id^='embedded-posts__bottom']");
-    if (embeddedBottom) {
-      embeddedBottom.style.display = "none";
-    }
+    const embeddedBottom = article.querySelector("[id^='embedded-posts__bottom']");
+    if (embeddedBottom) embeddedBottom.style.setProperty("display", "none", "important");
 
-    const collapseUp = searchRoot.querySelector(".post__collapse-button-up");
-    if (collapseUp) {
-      collapseUp.style.display = "none";
-    }
+    const collapseUp = article.querySelector(".post__collapse-button-up");
+    if (collapseUp) collapseUp.style.setProperty("display", "none", "important");
   };
 
   tryHide();
 
-  const observer = new MutationObserver(() => {
-    tryHide();
-  });
-
-  observer.observe(searchRoot, { childList: true, subtree: true });
-
-  setTimeout(() => observer.disconnect(), 5000);
+  const observer = new MutationObserver(tryHide);
+  observer.observe(article, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 8000);
 }
 
 function getAvatarColor(username, index) {
