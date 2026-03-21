@@ -1,3 +1,9 @@
+.post-action-menu__show-replies,
+[id^="embedded-posts__bottom"],
+.post__collapse-button-up {
+  display: none !important;
+}
+
 .thr-thread-box {
   margin-top: 14px;
   border-top: 1px solid #e5e7eb;

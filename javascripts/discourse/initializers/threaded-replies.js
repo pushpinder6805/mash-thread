@@ -8,6 +8,8 @@ export default apiInitializer("0.8", (api) => {
     if (!post || !post.reply_count) return;
     if (elem.querySelector(".thr-thread-box")) return;
 
+    hideNativeReplies(elem);
+
     const threadBox = document.createElement("div");
     threadBox.className = "thr-thread-box";
 
@@ -15,109 +17,141 @@ export default apiInitializer("0.8", (api) => {
     toggleRow.className = "thr-toggle-row";
 
     const toggleBtn = document.createElement("button");
-    toggleBtn.className = "thr-toggle-btn";
+    toggleBtn.className = "thr-toggle-btn thr-expanded";
     toggleBtn.innerHTML = `
       <span class="thr-reply-count">${post.reply_count} ${post.reply_count === 1 ? "Reply" : "Replies"}</span>
-      <span class="thr-chevron">&#8964;</span>
+      <span class="thr-chevron">&#8963;</span>
     `;
 
     toggleRow.appendChild(toggleBtn);
     threadBox.appendChild(toggleRow);
 
     const repliesContainer = document.createElement("div");
-    repliesContainer.className = "thr-replies-container thr-hidden";
+    repliesContainer.className = "thr-replies-container";
     threadBox.appendChild(repliesContainer);
 
     elem.appendChild(threadBox);
 
     let loaded = false;
-    let expanded = false;
+    let expanded = true;
+
+    loadReplies(post, repliesContainer).then(() => {
+      loaded = true;
+    });
 
     toggleBtn.addEventListener("click", async () => {
       expanded = !expanded;
 
       if (expanded) {
         toggleBtn.querySelector(".thr-chevron").innerHTML = "&#8963;";
+        toggleBtn.classList.add("thr-expanded");
         repliesContainer.classList.remove("thr-hidden");
 
         if (!loaded) {
           loaded = true;
-          repliesContainer.innerHTML = `<div class="thr-loading">Loading replies…</div>`;
-
-          try {
-            const topicId = post.topic_id;
-            const postNumber = post.post_number;
-
-            const data = await ajax(`/posts/${post.id}/replies.json`);
-            const replies = data || [];
-
-            repliesContainer.innerHTML = "";
-
-            const line = document.createElement("div");
-            line.className = "thr-line";
-            repliesContainer.appendChild(line);
-
-            if (replies.length === 0) {
-              repliesContainer.innerHTML = `<div class="thr-empty">No replies yet.</div>`;
-              return;
-            }
-
-            replies.forEach((reply, index) => {
-              const avatarColor = getAvatarColor(reply.username || "", index);
-              const avatarHtml = reply.avatar_template
-                ? `<img class="thr-avatar-img" src="${reply.avatar_template.replace("{size}", "40")}" alt="${reply.username}" />`
-                : `<div class="thr-avatar-placeholder" style="background:${avatarColor}">${(reply.username || "?")[0].toUpperCase()}</div>`;
-
-              const date = reply.created_at
-                ? formatDate(reply.created_at)
-                : "";
-
-              const excerpt = stripHtml(reply.cooked || "").slice(0, 200);
-
-              const replyEl = document.createElement("div");
-              replyEl.className = "thr-reply-item";
-              replyEl.innerHTML = `
-                <div class="thr-reply-dot" style="background:${avatarColor}"></div>
-                <div class="thr-reply-body">
-                  <div class="thr-reply-header">
-                    <div class="thr-reply-author-wrap">
-                      ${avatarHtml}
-                      <span class="thr-reply-author">${reply.name || reply.username || "Unknown"}</span>
-                    </div>
-                    <span class="thr-reply-date">${date}</span>
-                  </div>
-                  <div class="thr-reply-excerpt">${excerpt}</div>
-                  <a class="thr-jump-link" href="/t/${topicId}/${reply.post_number}" data-post-number="${reply.post_number}">
-                    <span class="thr-jump-arrow">&#8595;</span> Jump to post
-                  </a>
-                </div>
-              `;
-
-              repliesContainer.appendChild(replyEl);
-            });
-
-            const collapseBtn = document.createElement("button");
-            collapseBtn.className = "thr-collapse-btn";
-            collapseBtn.innerHTML = "&#8963;";
-            collapseBtn.addEventListener("click", () => {
-              toggleBtn.click();
-            });
-            repliesContainer.appendChild(collapseBtn);
-
-          } catch (e) {
-            repliesContainer.innerHTML = `<div class="thr-error">Could not load replies.</div>`;
-          }
+          await loadReplies(post, repliesContainer);
         }
       } else {
         toggleBtn.querySelector(".thr-chevron").innerHTML = "&#8964;";
+        toggleBtn.classList.remove("thr-expanded");
         repliesContainer.classList.add("thr-hidden");
       }
     });
   });
 });
 
+async function loadReplies(post, repliesContainer) {
+  repliesContainer.innerHTML = `<div class="thr-loading">Loading replies…</div>`;
+
+  try {
+    const topicId = post.topic_id;
+    const data = await ajax(`/posts/${post.id}/replies.json`);
+    const replies = data || [];
+
+    repliesContainer.innerHTML = "";
+
+    if (replies.length === 0) {
+      repliesContainer.innerHTML = `<div class="thr-empty">No replies yet.</div>`;
+      return;
+    }
+
+    const line = document.createElement("div");
+    line.className = "thr-line";
+    repliesContainer.appendChild(line);
+
+    replies.forEach((reply, index) => {
+      const avatarColor = getAvatarColor(reply.username || "", index);
+      const avatarHtml = reply.avatar_template
+        ? `<img class="thr-avatar-img" src="${reply.avatar_template.replace("{size}", "40")}" alt="${reply.username}" />`
+        : `<div class="thr-avatar-placeholder" style="background:${avatarColor}">${(reply.username || "?")[0].toUpperCase()}</div>`;
+
+      const date = reply.created_at ? formatDate(reply.created_at) : "";
+      const excerpt = stripHtml(reply.cooked || "").slice(0, 200);
+
+      const replyEl = document.createElement("div");
+      replyEl.className = "thr-reply-item";
+      replyEl.innerHTML = `
+        <div class="thr-reply-dot" style="background:${avatarColor}"></div>
+        <div class="thr-reply-body">
+          <div class="thr-reply-header">
+            <div class="thr-reply-author-wrap">
+              ${avatarHtml}
+              <span class="thr-reply-author">${reply.name || reply.username || "Unknown"}</span>
+            </div>
+            <span class="thr-reply-date">${date}</span>
+          </div>
+          <div class="thr-reply-excerpt">${excerpt}</div>
+          <a class="thr-jump-link" href="/t/${topicId}/${reply.post_number}" data-post-number="${reply.post_number}">
+            <span class="thr-jump-arrow">&#8595;</span> Jump to post
+          </a>
+        </div>
+      `;
+
+      repliesContainer.appendChild(replyEl);
+    });
+
+  } catch (e) {
+    repliesContainer.innerHTML = `<div class="thr-error">Could not load replies.</div>`;
+  }
+}
+
+function hideNativeReplies(cookedElem) {
+  const postArticle = cookedElem.closest("article.boxed, .topic-post");
+  const postBody = cookedElem.closest(".post__body, .topic-body");
+  const searchRoot = postArticle || postBody || cookedElem.parentElement;
+
+  if (!searchRoot) return;
+
+  const tryHide = () => {
+    const showRepliesBtn = searchRoot.querySelector(".post-action-menu__show-replies");
+    if (showRepliesBtn) {
+      showRepliesBtn.style.display = "none";
+    }
+
+    const embeddedBottom = searchRoot.querySelector("[id^='embedded-posts__bottom']");
+    if (embeddedBottom) {
+      embeddedBottom.style.display = "none";
+    }
+
+    const collapseUp = searchRoot.querySelector(".post__collapse-button-up");
+    if (collapseUp) {
+      collapseUp.style.display = "none";
+    }
+  };
+
+  tryHide();
+
+  const observer = new MutationObserver(() => {
+    tryHide();
+  });
+
+  observer.observe(searchRoot, { childList: true, subtree: true });
+
+  setTimeout(() => observer.disconnect(), 5000);
+}
+
 function getAvatarColor(username, index) {
-  const colors = ["#2563eb", "#16a34a", "#dc2626", "#d97706", "#7c3aed", "#0891b2", "#be185d"];
+  const colors = ["#2563eb", "#16a34a", "#dc2626", "#d97706", "#0891b2", "#be185d", "#ea580c"];
   if (username) {
     let hash = 0;
     for (let i = 0; i < username.length; i++) {
