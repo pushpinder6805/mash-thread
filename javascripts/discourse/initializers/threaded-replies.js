@@ -68,8 +68,18 @@ async function loadReplies(post, repliesContainer) {
 
   try {
     const topicId = post.topic_id;
-    const data = await ajax(`/posts/${post.id}/replies.json`);
-    const replies = data || [];
+    let replies = [];
+
+    if (post.post_number === 1) {
+      const topicData = await ajax(`/t/${topicId}.json?print=true`);
+      const allPosts = (topicData.post_stream && topicData.post_stream.posts) || [];
+      replies = allPosts.filter(
+        (p) => p.post_number !== 1 && (!p.reply_to_post_number || p.reply_to_post_number === 1)
+      );
+    } else {
+      const data = await ajax(`/posts/${post.id}/replies.json`);
+      replies = data || [];
+    }
 
     repliesContainer.innerHTML = "";
 
