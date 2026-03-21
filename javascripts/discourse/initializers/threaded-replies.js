@@ -115,9 +115,6 @@ function injectTopicMetaBar(post, cookedElem) {
   const topic = post.topic;
   if (!topic) return;
 
-  const article = cookedElem.closest("article.boxed") || cookedElem.closest("article");
-  if (!article) return;
-
   if (document.querySelector(".thr-meta-bar")) return;
 
   const contributors = topic.participant_count || topic.posters?.length || 0;
@@ -141,9 +138,33 @@ function injectTopicMetaBar(post, cookedElem) {
     </div>
   `;
 
-  const parent = article.parentNode;
-  if (parent) {
-    parent.insertBefore(bar, article.nextSibling);
+  const tryInsert = () => {
+    if (document.querySelector(".thr-meta-bar")) return true;
+
+    const postStream = document.querySelector(".post-stream");
+    if (!postStream) return false;
+
+    const firstPost =
+      postStream.querySelector('[data-post-number="1"]') ||
+      postStream.querySelector("article[id]") ||
+      postStream.querySelector("article");
+
+    if (!firstPost) return false;
+
+    const parent = firstPost.parentNode;
+    if (!parent) return false;
+
+    parent.insertBefore(bar, firstPost.nextSibling);
+    return true;
+  };
+
+  if (!tryInsert()) {
+    const delays = [100, 300, 700, 1500];
+    delays.forEach((ms) => {
+      setTimeout(() => {
+        if (!document.querySelector(".thr-meta-bar")) tryInsert();
+      }, ms);
+    });
   }
 }
 
