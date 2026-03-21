@@ -37,7 +37,7 @@ export default apiInitializer("0.8", (api) => {
 
     loadReplies(post, repliesContainer).then((actualCount) => {
       loaded = true;
-      if (typeof actualCount === "number" && actualCount !== post.reply_count) {
+      if (typeof actualCount === "number") {
         toggleBtn.querySelector(".thr-reply-count").textContent = `${actualCount} ${actualCount === 1 ? "Reply" : "Replies"}`;
       }
     });
